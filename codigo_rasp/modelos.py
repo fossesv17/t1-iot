@@ -1,4 +1,4 @@
-from peewee import Model, PostgresqlDatabase, CharField, IntegerField, FloatField, DateTimeField, BlobField
+from peewee import Model, PostgresqlDatabase, ForeignKeyField, CharField, IntegerField, FloatField, DateTimeField, BlobField
 
 # Configuración de la base de datos
 db_config = {
@@ -19,7 +19,7 @@ class BaseModel(Model):
 class Datos(BaseModel):
 
     # Headers necesarios
-    ID_device = CharField(max_length=255)
+    ID_device = CharField(max_length=2)
     Device_MAC = CharField(max_length=6)  
     
     # Datos Protocolo 0
@@ -52,26 +52,30 @@ class Datos(BaseModel):
     Rgyr_z = BlobField()
 
 
-class Logs(BaseModel):
-    timestamp = DateTimeField()
-    ID_device = CharField(max_length=255)
-
-    # Headers necesarios
-    Transport_Layer = CharField(max_length=1)
-    ID_protocol = CharField(max_length=1)
-
-
 class Configuracion(BaseModel):
-    ID_device = CharField(max_length=255)
+    ID_device = ForeignKeyField(Datos)
 
     # Headers necesarios
-    Transport_Layer = CharField(max_length=1)
     ID_protocol = CharField(max_length=1)
+    Transport_Layer = CharField(max_length=1)
+    
+
+
+class Logs(BaseModel):
+    timestamp = ForeignKeyField(Datos)
+    ID_device = ForeignKeyField(Datos)
+
+    # Headers necesarios
+    ID_protocol = ForeignKeyField(Configuracion)
+    Transport_Layer = ForeignKeyField(Configuracion)
     
 
 class Loss(BaseModel):
     Tiempo_Demora = FloatField()
     Packet_Loss = IntegerField()
 
+
+db.connect()
+db.create_tables([Datos, Configuracion, Logs, Loss])
 
 ## Ver la documentación de peewee para más información, es super parecido a Django
