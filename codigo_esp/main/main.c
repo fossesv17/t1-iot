@@ -15,10 +15,10 @@
 
 //Credenciales de WiFi
 
-#define WIFI_SSID "SSID"
-#define WIFI_PASSWORD "PASSOWRD"
-#define SERVER_IP     "192.168.0.1" // IP del servidor
-#define SERVER_PORT   1234
+#define WIFI_SSID "pdfteamWifi"
+#define WIFI_PASSWORD "teamPDF3"
+#define SERVER_IP "192.168.4.1" // IP del servidor
+#define SERVER_PORT 1234
 
 // Variables de WiFi
 #define WIFI_CONNECTED_BIT BIT0
@@ -136,10 +136,9 @@ void socket_tcp(){
     }
 
     // Enviar mensaje "Hola Mundo"
-    send(sock, "hola mundo", strlen("hola mundo"), 0);
-
+    send(sock, "wena los k", strlen("wena los k"), 0);
+    ESP_LOGI(TAG, "Eviando mensaje");
     // Recibir respuesta
-
     char rx_buffer[128];
     int rx_len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
     if (rx_len < 0) {
@@ -152,11 +151,46 @@ void socket_tcp(){
     close(sock);
 }
 
+void socket_udp() {
+    struct sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+    inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr.s_addr);
+
+    // Crear Socket UDP
+    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sock < 0) {
+        ESP_LOGE(TAG, "Error al crear es socket");
+    }
+
+    char echo_buffer[128];
+
+    const char* msg = "wena los k";
+
+    while (1) {
+        // Enviar mensaje
+        sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
+        ESP_LOGI(TAG, "Eviando mensaje");
+
+        int echo_recv = recvfrom(sock, echo_buffer, sizeof(echo_buffer) - 1, 0, NULL, NULL);
+        if (echo_recv < 0) {
+            ESP_LOGE(TAG, "Error al recibir echo");
+            return;
+        }
+        
+        ESP_LOGI(TAG, "TAMO JOYA");
+
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+    }
+
+    close(sock);
+}
+
 
 
 void app_main(void){
     nvs_init();
     wifi_init_sta(WIFI_SSID, WIFI_PASSWORD);
     ESP_LOGI(TAG,"Conectado a WiFi!\n");
-    socket_tcp();
+    socket_udp();
 }
