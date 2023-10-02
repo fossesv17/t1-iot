@@ -1,1 +1,4 @@
+.vscode
+build
+codigo_esp/build/*
 .vscode/settings.json
