@@ -1,84 +1,82 @@
+from struct import unpack, pack
+from pickle import dumps, loads
+import datetime
+import traceback
+from modelos import * 
 
-import struct # Libreria muy util para codificar y decodificar datos
+# Documentación struct unpack,pack :https://docs.python.org/3/library/struct.html#
+
+'''
+-headerToDict: Transforma los headers en un diccionario con la informacion correspondiente.
+-protocolUnpack: desempaqueta los datos del mensaje
+-dataToDict: Transforma el area de datos en un diccionario con los datos del mensaje
+-parseData: Utiliza dataToDict para obtener los datos y luego los almacena en la base de datos
+'''
+
+def response(ID_protocol:int, transport_layer:int):
+    return pack("<BB", ID_protocol,transport_layer)
+
+def getHeader(packet):
+    header = packet[:12]
+    header = headerToDict(header)
+    print(header)
+    return header
+
+def headerToDict(data):
+    ID_Device, M1, M2, M3, M4, M5, M6, transport_layer, protocol, len_msg = unpack("<2B6BBB2B", data)
+    MAC = ".".join([hex(x)[2:] for x in [M1, M2, M3, M4, M5, M6]])
+    return {"ID_device":ID_Device, "MAC":MAC, "ID_protocol":protocol, "Transport_layer":transport_layer, "length":len_msg}
+
+def getData(packet):
+    d1 = packet[0]
+    dictData = d1 #unpack("<B",d1)
+    return dictData
+
+def parseData(header, packet):
+    dictData = dataToDict(header["ID_protocol"], packet)
+    if dictData is not None:
+        # Falta definir la funcion saveData en los modelos
+        saveData(header, dictData)
+        print(dictData)
+        
+    return None if dictData is None else {**header, **dictData}
+
+def protocolUnpack(protocol:int, data):
+    protocol_unpack = ["<B", "<B4B", "<B4BB4BBf", "<B4BB4BBffffffff", "<B4BB4BBf2000f2000f2000f2000f2000f2000f"]
+    return unpack(protocol_unpack[protocol], data)
 
 
-"""
-
---- Packing en C ---
-
-
-
-char * pack(int packet_id, float value_float, char * text) {
-    char * packet = malloc(12 + strlen(text));
-    memcpy(packet, &packet_id, 4);
-    memcpy(packet + 4, &value_float, 4);
-    memcpy(packet + 8, &largo_text, 4);
-    memcpy(packet + 12, text, largo_text);
-    return packet;
-}
-
-//Luego mandan el paquete por el socket
-
-
---- Unpacking en C ---
-
-
-void unpack(char * packet) {
-    int packet_id;
-    float value_float;
-    int largo_text;
-    char * text;
-
-    memcpy(&packet_id, packet, 4);
-    memcpy(&value_float, packet + 4, 4);
-    memcpy(&largo_text, packet + 8, 4);
-
-    text = malloc(largo_text + 1); // +1 for the null-terminator
-    if (text == NULL) {
-        // Handle memory allocation failure
-        return;
-    }
+def dataToDict(protocol:int, data):
+    if protocol not in [0, 1, 2, 3, 4]:
+        print("Error: protocol doesnt exist")
+        return None
     
-    memcpy(text, packet + 12, largo_text);
-    text[largo_text] = '\0'; // Null-terminate the string
+    def protocolFunc(protocol, keys):
+        def p(data):
+            unp = protocolUnpack(protocol, data)
+            data_dict = {}
+            for (key,val) in zip(keys,unp):
+                if key == "Timestamp":
+                    data_dict[key] = datetime.datetime.now()
+                elif key in ["Acc_X", "Acc_Y", "Acc_Z", "Rgyr_X", "Rgyr_Y", "Rgyr_Z"]:
+                    data_dict[key] = dumps(val)
+                else:
+                    data_dict[key] = val
+            return data_dict
+        return p
+    
+    p0 = ["Batt_level"]
+    p1 = ["Batt_level", "Timestamp"]
+    p2 = ["Batt_level", "Timestamp", "Temp", "Press", "Hum", "Co"]
+    p3 = ["Batt_level", "Timestamp", "Temp", "Press", "Hum", "Co", "RMS", "Amp_X", "Frec_X", "Amp_Y", "Frec_Y", "Amp_Z", "Frec_Z"]
+    p4 = ["Batt_level", "Timestamp", "Temp", "Press", "Hum", "Co", "Acc_X", "Acc_Y", "Acc_Z", "Rgyr_X", "Rgyr_Y", "Rgyr_Z"]
 
-    printf("Packet ID: %d\n", packet_id);
-    printf("Float Value: %f\n", value_float);
-    printf("Text: %s\n", text);
+    p = [p0, p1, p2, p3, p4]
 
-    free(text); 
-}
-
-
-"""
-
-
-def pack(packet_id: int, value_float: float, text: str) -> bytes:
-    largo_text = len(text)
-    """
-     '<' significa que se codifica en little-endian
-     'i' significa que el primer dato es un entero de 4 bytes
-     'f' significa que el segundo dato es un float de 4 bytes
-     'i' significa que el tercer dato es un entero de 4 bytes
-     '{}s'.format(largo_text) (ej: 10s para un string de largo 10) significa que el string tiene largo variable,
-
-            Documentacion de struct: https://docs.python.org/3/library/struct.html
-
-    """
-    return struct.pack('<ifi{}s'.format(largo_text), packet_id, value_float, largo_text, text.encode('utf-8'))
-
-
-def unpack(packet: bytes) -> list:
-    packet_id,value_float,largo_text = struct.unpack('<ifi', packet[:12])
-    text = struct.unpack('<{}s'.format(largo_text), packet[12:])[0].decode('utf-8')
-    return [packet_id, value_float, text]
-
-
-
-if __name__ == "__main__":
-    mensage = pack(1, 3.20, "Hola mundo")
-    print(mensage)
-    print(unpack(mensage))
-
+    try:
+        return protocolFunc(protocol, p[protocol])(data)
+    except Exception:
+        print("Data unpacking Error:", traceback.format_exc())
+        return None
 
 
