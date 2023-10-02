@@ -15,6 +15,39 @@ class BaseModel(Model):
     class Meta:
         database = db
 
+    def saveData(headers, dataInDict):
+
+        config = Configuracion.select()[0]
+        config_update = Configuracion.update()
+
+        if(headers['ID_protocol']==0):
+            toInsert = Datos(ID_device=headers['ID_device'], Device_MAC=headers['MAC'], Batt_level=dataInDict['Batt_level'])
+            toInsert.save()
+
+        elif(headers['ID_protocol']==1):
+            toInsert = Datos(ID_device=headers['ID_device'], Device_MAC=headers['MAC'], Batt_level=dataInDict['Batt_level'], Timestamp=dataInDict['Timestamp'])
+            toInsert.save()
+
+        elif(headers['ID_protocol']==2):
+            toInsert = Datos(ID_device=headers['ID_device'], Device_MAC=headers['MAC'], Batt_level=dataInDict['Batt_level'], Timestamp=dataInDict['Timestamp'], 
+                             Temp=dataInDict['Temp'], Press=dataInDict['Press'], Hum=dataInDict['Hum'], Co=dataInDict['Co'])
+            toInsert.save()
+
+        elif(headers['ID_protocol']==3):
+            toInsert = Datos(ID_device=headers['ID_device'], Device_MAC=headers['MAC'], Batt_level=dataInDict['Batt_level'], Timestamp=dataInDict['Timestamp'], 
+                             Temp=dataInDict['Temp'], Press=dataInDict['Press'], Hum=dataInDict['Hum'], Co=dataInDict['Co'], RMS=dataInDict['RMS'], Amp_x=dataInDict['Amp_x'],
+                             Frec_x=dataInDict['Frec_X'], Amp_y=dataInDict['Amp_Y'], Frec_y=dataInDict['Frec_Y'], Amp_z=dataInDict['Amp_Z'], Frec_z=dataInDict['Frec_Z'])
+            toInsert.save()
+
+        elif(headers['ID_protocol'] ==4):
+            toInsert = Datos(ID_device=headers['ID_device'], Device_MAC=headers['MAC'], Batt_level=dataInDict['Batt_level'], Timestamp=dataInDict['Timestamp'], 
+                             Temp=dataInDict['Temp'], Press=dataInDict['Press'], Hum=dataInDict['Hum'], Co=dataInDict['Co'], Acc_x=dataInDict['Acc_X'],
+                             Acc_y=dataInDict['Acc_Y'], Acc_z=dataInDict['Acc_Z'], Rgyr_x=dataInDict['Rgyr_X'], Rgyr_y=dataInDict['Rgyr_Y'], Rgyr_z=dataInDict['Rgyr_Z'])
+            toInsert.save()
+
+        else:
+            pass
+
 
 class Datos(BaseModel):
 
@@ -26,7 +59,7 @@ class Datos(BaseModel):
     Batt_level = IntegerField()
 
     # Datos Protocolo 1
-    timestamp = DateTimeField()
+    Timestamp = DateTimeField()
 
     # Datos Protocolo 2
     Temp = IntegerField()
@@ -53,8 +86,6 @@ class Datos(BaseModel):
 
 
 class Configuracion(BaseModel):
-    ID_device = ForeignKeyField(Datos)
-
     # Headers necesarios
     ID_protocol = CharField(max_length=1)
     Transport_Layer = CharField(max_length=1)
