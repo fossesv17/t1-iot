@@ -6,7 +6,7 @@
 #include "esp_log.h"
 #include "data_gen.c"
 
-const uint16_t pack_length[] = {1, 5, 16, 44, 48016}; // se suma 1 para considerar el caracter \n
+const uint16_t pack_length[] = {2, 6, 16, 44, 48016}; // se suma 1 para considerar el caracter \n
 
 char* header(uint16_t msg_id, uint8_t transport_layer, uint8_t protocol) {
     char* hd = (char*) malloc(12);
