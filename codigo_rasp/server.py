@@ -30,7 +30,7 @@ class Server:
     def __init__(self, host, port):
         self.host = host
         self.port = port
-        self.transport_layer = 0 # TCP = 1; UPD = 0
+        self.transport_layer = 1 # TCP = 1; UPD = 0
         self.socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.stop_event = Event()
@@ -43,7 +43,7 @@ class Server:
     def _start_tcp_socket(self):
         self.socket_tcp.bind((self.host, self.port))
         self.socket_tcp.listen(2)
-        self.socket_tcp.settimeout(30)
+        #self.socket_tcp.settimeout(15)
 
         print("El servidor TCP está esperando conexiones en el puerto", self.port)
         while not self.stop_event.is_set():
@@ -58,7 +58,7 @@ class Server:
 
     def _start_udp_socket(self):
         self.socket_udp.bind((self.host, self.port))
-        self.socket_udp.settimeout(30)
+        self.socket_udp.settimeout(15)
         print("El servidor UDP está esperando conexiones en el puerto", self.port)
         while not self.stop_event.is_set():
             try:

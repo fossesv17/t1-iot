@@ -1,17 +1,18 @@
 #include <stdio.h>
 #include <string.h>
-
-
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_system.h"
 #include "esp_wifi.h"
+#include "esp_sleep.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
 #include "nvs_flash.h"
 #include "lwip/sockets.h" // Para sockets
+
+#include "packaging.c"
 
 //Credenciales de WiFi
 
@@ -135,9 +136,10 @@ void socket_tcp(){
         return;
     }
 
-    // Enviar mensaje "Hola Mundo"
-    send(sock, "wena los k", strlen("wena los k"), 0);
-    ESP_LOGI(TAG, "Eviando mensaje");
+    // Consultar por protocolo y capa
+    send(sock, "Hola", strlen("Hola"), 0);
+    ESP_LOGI(TAG, "Consultando por protocolo y capa");
+
     // Recibir respuesta
     char rx_buffer[128];
     int rx_len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
@@ -146,7 +148,29 @@ void socket_tcp(){
         return;
     }
     ESP_LOGI(TAG, "Datos recibidos: %s", rx_buffer);
+
+    uint16_t msg_id = 1;
     
+    while (1) {
+        char* payload = create_pack(msg_id, 1, 3);
+        
+        if (payload != NULL) {
+            send(sock, payload, strlen(payload), 0);
+            ESP_LOGI(TAG, "Eviando mensaje");
+        }
+
+        // Recibir respuesta
+        char rx_buffer[128];
+        int rx_len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
+        if (rx_len < 0) {
+            ESP_LOGE(TAG, "Error al recibir datos");
+            return;
+        }
+        ESP_LOGI(TAG, "Datos recibidos: %s", rx_buffer);
+        msg_id++;
+        free(payload);
+        esp_deep_sleep(60000000);
+    }
     // Cerrar el socket
     close(sock);
 }
@@ -164,13 +188,15 @@ void socket_udp() {
     }
 
     char echo_buffer[128];
-
-    const char* msg = "wena los k";
+    uint8_t msg_id = 1;
 
     while (1) {
+        const char* msg = create_pack(msg_id, 0, 2);
         // Enviar mensaje
-        sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
-        ESP_LOGI(TAG, "Eviando mensaje");
+        if (msg != NULL) {
+            sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
+            ESP_LOGI(TAG, "Eviando mensaje %s", msg);
+        }
 
         int echo_recv = recvfrom(sock, echo_buffer, sizeof(echo_buffer) - 1, 0, NULL, NULL);
         if (echo_recv < 0) {
@@ -180,6 +206,7 @@ void socket_udp() {
         
         ESP_LOGI(TAG, "TAMO JOYA");
 
+        msg_id++;
         vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
 
@@ -192,5 +219,5 @@ void app_main(void){
     nvs_init();
     wifi_init_sta(WIFI_SSID, WIFI_PASSWORD);
     ESP_LOGI(TAG,"Conectado a WiFi!\n");
-    socket_udp();
+    socket_tcp();
 }
