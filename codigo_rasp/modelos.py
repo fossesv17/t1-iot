@@ -78,8 +78,9 @@ def insert_to_Configuracion(headers):
         protocol = headers['ID_protocol']
         trans_layer = headers['Transport_layer']
 
-        insert_script = 'INSERT INTO Configuracion (IDProtocol, TransportLayer) VALUES (%s, %s)'
-        insert_values = (protocol, trans_layer)
+        insert_script = 'INSERT INTO Configuracion (Timestamp, IDProtocol, TransportLayer) VALUES (%s, %s, %s)'
+        insert_values = (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), protocol, trans_layer)
+
         cur.execute(insert_script, insert_values)
 
 
@@ -131,6 +132,20 @@ def insert_to_Loss(headers, dataInDict):
         cur.execute(insert_to_loss_script, insert_to_loss_values)
 
 
+def get_current_config():
+    """
+    :return: Retorna la configuracion mas reciente
+    """
+    with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+        cur.execute('SELECT * FROM Configuracion ORDER BY TIMESTAMP DESC')
+        config = cur.fetchone()
+
+        protocol = config[1]
+        transport_layer = config[2]
+
+        return protocol, transport_layer
+
+
 cur = None
 
 try:
@@ -165,6 +180,7 @@ try:
                                     Frecz real) '''
 
             create_config_script = '''CREATE TABLE IF NOT EXISTS Configuracion(
+                                    Timestamp timestamp(4) NOT NULL,
                                     IDProtocol integer NOT NULL,
                                     TransportLayer character(3) NOT NULL)'''
 
@@ -216,33 +232,3 @@ finally:
     if conn is not None:
         conn.close()
 
-
-def saveData(headers, dataInDict):
-    # Verificamos la configuracion
-    update_config(headers['ID_protocol'], headers['Transport_Layer'])
-
-    # Tabla Datos
-    if headers['ID_protocol'] == 0:
-        toInsert = Datos.create(ID_device=headers['ID_device'], Device_MAC=headers['MAC'],
-                                Batt_level=dataInDict['Batt_level'])
-
-    elif headers['ID_protocol'] == 1:
-        toInsert = Datos.create(ID_device=headers['ID_device'], Device_MAC=headers['MAC'],
-                                Batt_level=dataInDict['Batt_level'], Timestamp=dataInDict['Timestamp'])
-
-    elif headers['ID_protocol'] == 2:
-        toInsert = Datos.create(ID_device=headers['ID_device'], Device_MAC=headers['MAC'],
-                                Batt_level=dataInDict['Batt_level'], Timestamp=dataInDict['Timestamp'],
-                                Temp=dataInDict['Temp'], Press=dataInDict['Press'], Hum=dataInDict['Hum'],
-                                Co=dataInDict['Co'])
-
-    elif headers['ID_protocol'] == 3:
-        toInsert = Datos.create(ID_device=headers['ID_device'], Device_MAC=headers['MAC'],
-                                Batt_level=dataInDict['Batt_level'], Timestamp=dataInDict['Timestamp'],
-                                Temp=dataInDict['Temp'], Press=dataInDict['Press'], Hum=dataInDict['Hum'],
-                                Co=dataInDict['Co'], RMS=dataInDict['RMS'], Amp_x=dataInDict['Amp_x'],
-                                Frec_x=dataInDict['Frec_X'], Amp_y=dataInDict['Amp_Y'], Frec_y=dataInDict['Frec_Y'],
-                                Amp_z=dataInDict['Amp_Z'], Frec_z=dataInDict['Frec_Z'])
-
-    else:
-        pass
