@@ -105,7 +105,7 @@ def insert_to_Loss(headers, dataInDict):
     :param dataInDict: Un diccionario con todos los datos que se desean agregar
     """
     with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-        expected_len = headers['length']
+        expected_len = headers['length'] - 12
 
         real_len = len(dataInDict.values())
 
@@ -182,13 +182,13 @@ try:
             create_config_script = '''CREATE TABLE IF NOT EXISTS Configuracion(
                                     Timestamp timestamp(4) NOT NULL,
                                     IDProtocol integer NOT NULL,
-                                    TransportLayer character(3) NOT NULL)'''
+                                    TransportLayer character(1) NOT NULL)'''
 
             create_logs_script = '''CREATE TABLE IF NOT EXISTS Logs(
                                     Timestamp timestamp(4) NOT NULL,
                                     IDDevice character(8) NOT NULL,
                                     IDProtocol integer NOT NULL,
-                                    TransportLayer character(3) NOT NULL)'''
+                                    TransportLayer character(1) NOT NULL)'''
 
             create_loss_script = '''CREATE TABLE IF NOT EXISTS Loss(
                                     TiempoDemora real NOT NULL,
@@ -202,16 +202,16 @@ try:
             # Ejemplos donde se agregan datos manualmente
 
             headers_datos_0 = {"ID_device": 'Harry', "MAC": '2C:41:A1:27:09:57', "ID_protocol": 0,
-                               "Transport_layer": 'TCP', "length": 27}
+                               "Transport_layer": '1', "length": 27}
 
             headers_datos_1 = {"ID_device": 'Henry', "MAC": '2C:41:A1:27:09:57', "ID_protocol": 1,
-                               "Transport_layer": 'TCP', "length": 31}
+                               "Transport_layer": '1', "length": 31}
 
             headers_datos_2 = {"ID_device": 'Larry', "MAC": '2C:41:A1:27:09:57', "ID_protocol": 2,
-                               "Transport_layer": 'TCP', "length": 41}
+                               "Transport_layer": '1', "length": 41}
 
             headers_datos_3 = {"ID_device": 'Jerry', "MAC": '2C:41:A1:27:09:57', "ID_protocol": 3,
-                               "Transport_layer": 'TCP', "length": 69}
+                               "Transport_layer": '1', "length": 69}
 
             headers = (headers_datos_0, headers_datos_1, headers_datos_2, headers_datos_3)
 
