@@ -106,8 +106,7 @@ def parseData(header, packet):
 
 
 def protocolUnpack(protocol: int, data):
-    print("Hola".encode() + data)
-    protocol_unpack = ["<H", "<H19s", "<H19s4i", "<H19s4i7f"]
+    protocol_unpack = ["<H", "<H19s", "<H19s4i", "<H19s4ifffffff"]
     return unpack(protocol_unpack[protocol], data)
 
 
@@ -123,7 +122,6 @@ def dataToDict(protocol: int, data):
             for (key, val) in zip(keys, unp):
                 if key == "Timestamp":
                     data_dict[key] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    print(data_dict[key])
                 else:
                     data_dict[key] = val
             return data_dict
@@ -145,10 +143,45 @@ def dataToDict(protocol: int, data):
 
 
 headers_datos_0 = {"ID_device": 'Harry', "MAC": '2C:41:A1:27:09:57', "ID_protocol": 0,
-                   "Transport_layer": 1, "length": 70}
+                   "Transport_layer": 1, "length": 87}
 
 datos_values = {"Batt_level": 80, "Timestamp": '2023-10-08 04:05:06', "Temp": 15, "Press": 1100,
                           "Hum": 55, "Co": 176, "RMS": 0.009, "Amp_X": 0.1, "Frec_X": 30.3, "Amp_Y": 0.05,
                           "Frec_Y": 59.1, "Amp_Z": 0.009, "Frec_Z": 90.2}
 
+len1 = 0
+for key,val in datos_values.items():
+    if type(val) == int or type(val) == float:
+        len1 += len(str(val))
+    else:
+        len1 += len(val)
 
+for key,val in headers_datos_0.items():
+    if type(val) == int or type(val) == float:
+        len1 += len(str(val))
+    else:
+        len1 += len(val)
+
+print(len1)
+
+#packed = packing(headers_datos_0, datos_values)
+
+#print(packed)
+
+#unpacked = unpacking(packed)
+
+#print(unpacked)
+
+headers_datos_0 = {"ID_device": 'Barry', "MAC": '2C:41:A1:27:09:57', "ID_protocol": 3,
+                        "Transport_layer": '1', "length": 27}
+
+insert_to_datos_values = {"Batt_level": 75, "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Temp": 15, "Press": 1100,
+                            "Hum": 55, "Co": 176, "RMS": 0.009, "Amp_X": 0.1, "Frec_X": 30.3, "Amp_Y": 0.05,
+                            "Frec_Y": 59.1, "Amp_Z": 0.009, "Frec_Z": 90.2}
+
+insert_to_Datos(headers_datos_0, insert_to_datos_values)
+insert_to_Logs(headers_datos_0, insert_to_datos_values)
+insert_to_Configuracion(headers_datos_0)
+config = get_current_config()
+
+print(config)
