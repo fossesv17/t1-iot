@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <math.h>
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_system.h"
@@ -28,6 +31,39 @@ static const char* TAG = "WIFI";
 static int s_retry_num = 0;
 static EventGroupHandle_t s_wifi_event_group;
 
+#define TCP 1
+#define UDP 0
+
+uint8_t protocol = 1;
+
+int fragTCP(char* pack, int size, int socket) {
+    for (int i = 0; i < size; i+=FRAG_LEN) {
+        int frag_size = fmin(FRAG_LEN, size - i);
+
+        int err = send(socket, &(pack[i]), frag_size, 0);
+        if (err < 0) {
+            ESP_LOGE("SEND FRAG", "Error al enviar paquetitos fragmentados");
+            return -1;
+        }
+    }
+    ESP_LOGI("SEND FRAG", "Envio exitoso SIUUU");
+    return 1;
+}
+
+int fragUDP(char* pack, int size, int socket, struct sockaddr* dest_addr, size_t dest_addr_size) {
+    for (int i = 0; i < size; i+=FRAG_LEN) {
+        int frag_size = fmin(FRAG_LEN, size - i);
+        
+        int err = sendto(socket, pack + i, frag_size, 0, dest_addr, dest_addr_size);
+
+        if (err < 0) {
+            ESP_LOGE("SEND FRAG", "Error al enviar paquetitos fragmentados");
+            return -1;
+        }
+    }
+    ESP_LOGI("SEND FRAG", "Envio exitoso SIUUU");
+    return 1;
+}
 
 void event_handler(void* arg, esp_event_base_t event_base,
                           int32_t event_id, void* event_data) {
@@ -148,28 +184,38 @@ void socket_tcp(){
         return;
     }
     ESP_LOGI(TAG, "Datos recibidos: %s", rx_buffer);
+    
 
     uint16_t msg_id = 1;
     
     while (1) {
-        char* payload = create_pack(msg_id, 1, 3);
+        char* msg = create_pack(msg_id, TCP, protocol);
         
-        if (payload != NULL) {
-            send(sock, payload, strlen(payload), 0);
-            ESP_LOGI(TAG, "Eviando mensaje");
-        }
+        if (msg != NULL) {
+            if (protocol == 4) {
+                int err = fragTCP(msg, pack_length[protocol], sock);
+                if (err < 0) {
+                    ESP_LOGI(TAG, "Manito se le cayo el paquete");
+                    return;
+                }
+            }
 
-        // Recibir respuesta
-        char rx_buffer[128];
-        int rx_len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
-        if (rx_len < 0) {
-            ESP_LOGE(TAG, "Error al recibir datos");
-            return;
+            else {
+                send(sock, msg, pack_length[protocol], 0);
+                ESP_LOGI(TAG, "Enviando mensaje");
+            }
+            // Recibir respuesta
+            char rx_buffer[128];
+            int rx_len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
+            if (rx_len < 0) {
+                ESP_LOGE(TAG, "Error al recibir datos");
+                return;
+            }
+            ESP_LOGI(TAG, "Datos recibidos: %s", rx_buffer);
+            msg_id++;
+            free(msg);
+            esp_deep_sleep(60000000);
         }
-        ESP_LOGI(TAG, "Datos recibidos: %s", rx_buffer);
-        msg_id++;
-        free(payload);
-        esp_deep_sleep(60000000);
     }
     // Cerrar el socket
     close(sock);
@@ -191,25 +237,32 @@ void socket_udp() {
     uint8_t msg_id = 1;
 
     while (1) {
-        const char* msg = create_pack(msg_id, 0, 2);
-        // Enviar mensaje
+        char* msg = create_pack(msg_id, UDP, protocol);
         if (msg != NULL) {
-            sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
-            ESP_LOGI(TAG, "Eviando mensaje %s", msg);
-        }
+            if (protocol == 4) {
+                int err = fragUDP(msg, pack_length[protocol], sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
+                if (err < 0) {
+                    ESP_LOGI(TAG, "Manito se le cayo el paquete");
+                    return;
+                }
+            }
+            else {
+                sendto(sock, msg, pack_length[protocol], 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
+                ESP_LOGI(TAG, "Enviando mensaje de largo %d", pack_length[protocol]);
 
-        int echo_recv = recvfrom(sock, echo_buffer, sizeof(echo_buffer) - 1, 0, NULL, NULL);
-        if (echo_recv < 0) {
-            ESP_LOGE(TAG, "Error al recibir echo");
-            return;
+                int echo_recv = recvfrom(sock, echo_buffer, sizeof(echo_buffer) - 1, 0, NULL, NULL);
+                if (echo_recv < 0) {
+                    ESP_LOGE(TAG, "Error al recibir echo");
+                    return;
+                }
+            }
+            ESP_LOGI(TAG, "TAMO JOYA");
+            free(msg);
+            msg_id++;
+            vTaskDelay(2000 / portTICK_PERIOD_MS);
         }
-        
-        ESP_LOGI(TAG, "TAMO JOYA");
-
-        msg_id++;
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        ESP_LOGI(TAG, "KE PASO MANITO?");
     }
-
     close(sock);
 }
 
@@ -219,5 +272,5 @@ void app_main(void){
     nvs_init();
     wifi_init_sta(WIFI_SSID, WIFI_PASSWORD);
     ESP_LOGI(TAG,"Conectado a WiFi!\n");
-    socket_tcp();
+    socket_udp();
 }
