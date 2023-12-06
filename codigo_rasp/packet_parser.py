@@ -79,7 +79,7 @@ def dictToData(headers, dict):
         co = dict['Co']
 
         return pack("<H19s4i", batt_lvl, timestp, temp, press, hum, co)
-    else:
+    elif id_protocol == 3:
         batt_lvl = dict['Batt_level']
         timestp = str(dict['Timestamp']).encode()
 
@@ -98,10 +98,29 @@ def dictToData(headers, dict):
 
         return pack("<H19s4ifffffff", batt_lvl, timestp, temp, press, hum, co,
                     rms, ampx, frecx, ampy, frecy, ampz, frecz)
+    else:
+        batt_lvl = dict['Batt_level']
+        timestp = str(dict['Timestamp']).encode()
+
+        temp = dict['Temp']
+        press = dict['Press']
+        hum = dict['Hum']
+        co = dict['Co']
+
+        accx = dict['Amp_X']
+        accy = dict['Acc_Y']
+        accz = dict['Acc_Z']
+        rgyrx = dict['Rgyr_X']
+        rgyry = dict['Rgyr_Y']
+        rgyrz = dict['Rgyr_Z']
+
+        return pack("<H19s4i2000f2000f2000f2000f2000f2000f", batt_lvl, timestp, temp, press, hum, co,
+            accx, accy, accz, rgyrx, rgyry, rgyrz)
+
 
 
 def dataToDict(protocol, data):
-    if protocol not in [0, 1, 2, 3]:
+    if protocol not in [0, 1, 2, 3, 4]:
         print("Error: protocol doesnt exist")
         return None
     
@@ -154,8 +173,18 @@ def dataToDict(protocol, data):
         return data_dict
 
     else:
-        print("Error")
-            
+        p4 = ["Batt_level", "Timestamp", "Temp", "Press", "Hum", "Co", "Acc_X", "Acc_Y", "Acc_Z", "Rgyr_X",
+                "Rgyr_Y", "Rgyr_Z"]
+
+        batt_lvl, timestmp, temp, press, hum, co, accx, accy, accz, rgyrx, rgyry, rgyrz = unpack("<H19s4i2000f2000f2000f2000f2000f2000f", data)
+
+        data4 = [batt_lvl, timestmp, temp, press, hum, co, accx, accy, accz, rgyrx, rgyry, rgyrz]
+        
+        for i in range(0, len(p4)):
+            data_dict[p4[i]] = data4[i]
+
+        return data_dict
+      
 
 
 

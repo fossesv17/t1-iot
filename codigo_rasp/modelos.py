@@ -99,6 +99,8 @@ def insert_to_Datos(headers, dataInDict):
                                             dataInDict['Acc_Z'], dataInDict['Rgyr_X'], dataInDict['Rgyr_Y'],
                                             dataInDict['Rgyr_Z'])                    
 
+                    cur.execute(insert_to_datos_script, insert_to_datos_values)
+                    
     except Exception as error:
         print(error)
     finally:
