@@ -33,6 +33,7 @@ static EventGroupHandle_t s_wifi_event_group;
 
 #define TCP 1
 #define UDP 0
+#define FRAG_LEN 1000
 
 uint8_t protocol = 1;
 
@@ -187,12 +188,9 @@ void socket_tcp(){
     
 
     uint16_t msg_id = 1;
-    unsigned char mac[6];
-    esp_efuse_mac_get_default(mac);
 
     while (1) {
-        char* msg = create_packet(msg_id, mac, TCP, protocol);
-        
+        char* msg = create_pack(msg_id, TCP, protocol);
         if (msg != NULL) {
             if (protocol == 4) {
                 int err = fragTCP(msg, pack_length[protocol], sock);
@@ -237,12 +235,9 @@ void socket_udp() {
 
     char echo_buffer[128];
     uint8_t msg_id = 1;
-    unsigned char mac[6];
-    esp_efuse_mac_get_default(mac);
 
     while (1) {
-        char* msg1 = create_packet(msg_id, mac, UDP, protocol);
-        char* msg = "PIJA";
+        char* msg = create_pack(msg_id, UDP, protocol);
         if (msg != NULL) {
             if (protocol == 4) {
                 int err = fragUDP(msg, pack_length[protocol], sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
@@ -262,7 +257,7 @@ void socket_udp() {
                 }
             }
             ESP_LOGI(TAG, "TAMO JOYA");
-            free(msg1);
+            free(msg);
             msg_id++;
             vTaskDelay(2000 / portTICK_PERIOD_MS);
         }
