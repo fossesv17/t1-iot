@@ -360,7 +360,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
 #endif
         esp_ble_gatts_create_service(gatts_if, &gl_profile_tab[PROFILE_APP_ID].service_id, GATTS_NUM_HANDLE_TEST_A);
         break;
-    case ESP_GATTS_READ_EVT: {
+    case ESP_GATTS_READ_EVT: { // READ EVENT
         ESP_LOGI(GATTS_TAG, "GATT_READ_EVT, conn_id %d, trans_id %" PRIu32 ", handle %d", param->read.conn_id, param->read.trans_id, param->read.handle);
         esp_gatt_rsp_t rsp;
         memset(&rsp, 0, sizeof(esp_gatt_rsp_t));
@@ -374,7 +374,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
                                     ESP_GATT_OK, &rsp);
         break;
     }
-    case ESP_GATTS_WRITE_EVT: {
+    case ESP_GATTS_WRITE_EVT: { // WRITE EVENT
         ESP_LOGI(GATTS_TAG, "GATT_WRITE_EVT, conn_id %d, trans_id %" PRIu32 ", handle %d", param->write.conn_id, param->write.trans_id, param->write.handle);
         if (!param->write.is_prep){
             ESP_LOGI(GATTS_TAG, "GATT_WRITE_EVT, value len %d, value :", param->write.len);

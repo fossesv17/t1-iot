@@ -33,6 +33,7 @@ static EventGroupHandle_t s_wifi_event_group;
 
 #define TCP 1
 #define UDP 0
+#define FRAG_LEN 1000
 
 uint8_t protocol = 1;
 
@@ -187,10 +188,9 @@ void socket_tcp(){
     
 
     uint16_t msg_id = 1;
-    
+
     while (1) {
         char* msg = create_pack(msg_id, TCP, protocol);
-        
         if (msg != NULL) {
             if (protocol == 4) {
                 int err = fragTCP(msg, pack_length[protocol], sock);
@@ -261,7 +261,9 @@ void socket_udp() {
             msg_id++;
             vTaskDelay(2000 / portTICK_PERIOD_MS);
         }
-        ESP_LOGI(TAG, "KE PASO MANITO?");
+        else {
+            ESP_LOGI(TAG, "KE PASO MANITO?");
+        }
     }
     close(sock);
 }

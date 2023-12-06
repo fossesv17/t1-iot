@@ -3,3 +3,4 @@ build
 codigo_esp/build/*
 codigo_esp/cmake-build-debug/*
 .vscode/settings.json
+codigo_rasp/__pycache__/*

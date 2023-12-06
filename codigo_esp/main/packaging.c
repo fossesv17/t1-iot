@@ -5,9 +5,7 @@
 #include "esp_mac.h"
 #include "esp_log.h"
 #include "data_gen.c"
-#include <math.h>
 
-#define FRAG_LEN 1000
 const uint16_t pack_length[] = {2, 6, 16, 44, 48016}; // se suma 1 para considerar el caracter \n
 
 char* header(uint16_t msg_id, uint8_t transport_layer, uint8_t protocol) {
