@@ -187,9 +187,11 @@ void socket_tcp(){
     
 
     uint16_t msg_id = 1;
-    
+    unsigned char mac[6];
+    esp_efuse_mac_get_default(mac);
+
     while (1) {
-        char* msg = create_pack(msg_id, TCP, protocol);
+        char* msg = create_packet(msg_id, mac, TCP, protocol);
         
         if (msg != NULL) {
             if (protocol == 4) {
@@ -235,9 +237,12 @@ void socket_udp() {
 
     char echo_buffer[128];
     uint8_t msg_id = 1;
+    unsigned char mac[6];
+    esp_efuse_mac_get_default(mac);
 
     while (1) {
-        char* msg = create_pack(msg_id, UDP, protocol);
+        char* msg1 = create_packet(msg_id, mac, UDP, protocol);
+        char* msg = "PIJA";
         if (msg != NULL) {
             if (protocol == 4) {
                 int err = fragUDP(msg, pack_length[protocol], sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
@@ -257,11 +262,13 @@ void socket_udp() {
                 }
             }
             ESP_LOGI(TAG, "TAMO JOYA");
-            free(msg);
+            free(msg1);
             msg_id++;
             vTaskDelay(2000 / portTICK_PERIOD_MS);
         }
-        ESP_LOGI(TAG, "KE PASO MANITO?");
+        else {
+            ESP_LOGI(TAG, "KE PASO MANITO?");
+        }
     }
     close(sock);
 }
