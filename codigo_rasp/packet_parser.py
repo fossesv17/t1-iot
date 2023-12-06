@@ -32,7 +32,7 @@ def unpacking(packet):
 
 def getDictHeader(packet):
     header = packet[:37]
-    #print(header)
+    print(header)
     header = headerToDict(header)
     return header
 

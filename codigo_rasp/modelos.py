@@ -76,7 +76,7 @@ def insert_to_Datos(headers, dataInDict):
                                             dataInDict['Hum'], dataInDict['Co'])
 
                     cur.execute(insert_to_datos_script, insert_to_datos_values)
-                else:
+                elif id_protocol == 3:
                     insert_to_datos_script = 'INSERT INTO Datos (IDDevice, Device_MAC, Battlevel, Timestamp, ' \
                                             'Temp, Press, Hum, Co, RMS, Ampx, Frecx, Ampy, Frecy, Ampz, Frecz) VALUES ' \
                                             '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
@@ -88,6 +88,16 @@ def insert_to_Datos(headers, dataInDict):
                                             dataInDict['Amp_Z'], dataInDict['Frec_Z'])
 
                     cur.execute(insert_to_datos_script, insert_to_datos_values)
+                else:
+                    insert_to_datos_script = 'INSERT INTO Datos (IDDevice, Device_MAC, Battlevel, Timestamp, ' \
+                                            'Temp, Press, Hum, Co, Accx, Accy, Accz, Rgyrx, Rgyry Rgyrz) VALUES ' \
+                                            '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+                    
+                    insert_to_datos_values = (headers['ID_device'], headers['MAC'], dataInDict['Batt_level'],
+                                            dataInDict['Timestamp'], dataInDict['Temp'], dataInDict['Press'],
+                                            dataInDict['Hum'], dataInDict['Co'], dataInDict['Acc_X'], dataInDict['Acc_Y'],
+                                            dataInDict['Acc_Z'], dataInDict['Rgyr_X'], dataInDict['Rgyr_Y'],
+                                            dataInDict['Rgyr_Z'])                    
 
     except Exception as error:
         print(error)
@@ -242,7 +252,13 @@ def create_tables():
                                         Ampy real,
                                         Frecy real,
                                         Ampz real,
-                                        Frecz real) '''
+                                        Frecz real,
+                                        Accx text[],
+                                        Accy text[],
+                                        Accz text[],
+                                        Rgyrx text[],
+                                        Rgyry text[],
+                                        Rgyrz text[]) '''
 
                 create_config_script = '''CREATE TABLE IF NOT EXISTS Configuracion(
                                         Timestamp timestamp(4) NOT NULL,
