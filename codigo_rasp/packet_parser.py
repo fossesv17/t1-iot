@@ -1,5 +1,6 @@
 from struct import unpack, pack
 from pickle import dumps, loads
+import numpy
 import datetime
 import traceback
 from modelos import *
@@ -98,7 +99,7 @@ def dictToData(headers, dict):
 
         return pack("<H19s4ifffffff", batt_lvl, timestp, temp, press, hum, co,
                     rms, ampx, frecx, ampy, frecy, ampz, frecz)
-    else:
+    elif id_protocol == 4:
         batt_lvl = dict['Batt_level']
         timestp = str(dict['Timestamp']).encode()
 
@@ -107,7 +108,7 @@ def dictToData(headers, dict):
         hum = dict['Hum']
         co = dict['Co']
 
-        accx = dict['Amp_X']
+        accx = dict['Acc_X']
         accy = dict['Acc_Y']
         accz = dict['Acc_Z']
         rgyrx = dict['Rgyr_X']
@@ -116,6 +117,8 @@ def dictToData(headers, dict):
 
         return pack("<H19s4i2000f2000f2000f2000f2000f2000f", batt_lvl, timestp, temp, press, hum, co,
             accx, accy, accz, rgyrx, rgyry, rgyrz)
+    else:
+        print("Error")
 
 
 
@@ -190,23 +193,51 @@ def dataToDict(protocol, data):
 
 # Probando si funciona el acceso a la base de datos desde otro archivo:
 
-headers_datos_0 = {"ID_device": 'Barry', "MAC": '2C:41:A1:27:09:57', "ID_protocol": 1,
+acc = numpy.random.uniform(-16.0, 16.0, size=(3, 2000))
+rgyr = numpy.random.uniform(-1000, 1000, size=(3, 2000))
+
+accx = []
+accy = []
+accz = []
+rgyrx = []
+rgyry = []
+rgyrz = []
+
+for i in range (0, 2000):
+    accx.append(acc[0][i])
+    accy.append(acc[1][i])
+    accz.append(acc[2][i])
+
+    rgyrx.append(rgyr[0][i])
+    rgyry.append(rgyr[1][i])
+    rgyrz.append(rgyr[2][i])
+
+
+# Headers y Datos de ejemplo para los protocolos del 0 al 3 y para el protocolo 4
+
+headers_datos = {"ID_device": 'Barry', "MAC": '2C:41:A1:27:09:57', "ID_protocol": 3,
+                        "Transport_layer": '1', "length": 51}
+
+headers_datos_4 = {"ID_device": 'Barry', "MAC": '2C:41:A1:27:09:57', "ID_protocol": 4,
                         "Transport_layer": '1', "length": 51}
 
 insert_to_datos_values = {"Batt_level": 75, "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Temp": 15, "Press": 1100,
                             "Hum": 55, "Co": 176, "RMS": 0.009, "Amp_X": 0.1, "Frec_X": 30.3, "Amp_Y": 0.05,
                             "Frec_Y": 59.1, "Amp_Z": 0.009, "Frec_Z": 90.2}
 
-packed = packing(headers_datos_0, insert_to_datos_values)
+insert_to_datos_values4 = {"Batt_level": 75, "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Temp": 15, "Press": 1100,
+                            "Hum": 55, "Co": 176, "Acc_X": accx, "Acc_Y": accy, "Acc_Z": accz, "Rgyr_X":rgyrx, "Rgyr_Y":rgyry, "Rgyr_Z":rgyrz }
 
-#print(packed)
 
-headers, values = unpacking(packed)
+# Datos de ejemplo para insertar en la tabla de configuracion
 
-print(headers)
-print(values)
+insert_to_config = {"TCP_Port": 5432, "UDP_Port":8765, "Gyro_Sensibility":50, "Acc_Sensibility":27, "Gyro_SRate":99, "Acc_SRate":86, 
+                    "Disc_Time":8, "Host_IP_Address":"127.0.0.0", "Wifi_SSID":"FCFM", "Wifi_Pass":"Pass12345"}
 
-#insert_to_Datos(headers_datos_0, insert_to_datos_values)
-#insert_to_Logs(headers_datos_0, insert_to_datos_values)
-#insert_to_Configuracion(headers_datos_0)
-#config = get_current_config()
+# Insertamos datos para un protocolo entre [0,3] y para protocolo 4. También insertamos información en la tabla de configuración
+
+insert_to_Datos(headers_datos, insert_to_datos_values)
+insert_to_Datos(headers_datos_4, insert_to_datos_values4)
+insert_to_Configuracion(headers_datos, insert_to_config)
+config = get_current_config()
+print(config)

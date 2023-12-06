@@ -90,7 +90,7 @@ def insert_to_Datos(headers, dataInDict):
                     cur.execute(insert_to_datos_script, insert_to_datos_values)
                 else:
                     insert_to_datos_script = 'INSERT INTO Datos (IDDevice, Device_MAC, Battlevel, Timestamp, ' \
-                                            'Temp, Press, Hum, Co, Accx, Accy, Accz, Rgyrx, Rgyry Rgyrz) VALUES ' \
+                                            'Temp, Press, Hum, Co, Accx, Accy, Accz, Rgyrx, Rgyry, Rgyrz) VALUES ' \
                                             '(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
                     
                     insert_to_datos_values = (headers['ID_device'], headers['MAC'], dataInDict['Batt_level'],
@@ -108,9 +108,10 @@ def insert_to_Datos(headers, dataInDict):
             conn.close()
 
 
-def insert_to_Configuracion(headers):
+def insert_to_Configuracion(headers, dataInDict):
     """
     :param headers: Un diccionario con los headers
+    :param dataInDict: Un diccionario con todos los datos que deben introducirse en esta tabla
     """
     try:
 
@@ -122,8 +123,23 @@ def insert_to_Configuracion(headers):
                 protocol = headers['ID_protocol']
                 trans_layer = headers['Transport_layer']
 
-                insert_script = 'INSERT INTO Configuracion (Timestamp, IDProtocol, TransportLayer) VALUES (%s, %s, %s)'
-                insert_values = (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), protocol, trans_layer)
+                TCP_port = dataInDict['TCP_Port']
+                UDP_port = dataInDict['UDP_Port']
+                Gyro_sensibility = dataInDict['Gyro_Sensibility']
+                Acc_sensibility = dataInDict['Acc_Sensibility']
+                Acc_srate = dataInDict['Acc_SRate']
+                Gyro_srate = dataInDict['Gyro_SRate']
+                Disc_time = dataInDict['Disc_Time']
+                Host_ip_addr = dataInDict['Host_IP_Address']
+                Wifi_ssid = dataInDict['Wifi_SSID']
+                Wifi_pass = dataInDict['Wifi_Pass']
+
+
+                insert_script = '''INSERT INTO Configuracion (Timestamp, IDProtocol, TransportLayer, TCP_Port, UDP_Port, GyroSensibility,
+                AccSensibility, GyroSamplingRate, AccSamplingRate, DiscTime, HostIpAddr, WifiSSID, WifiPass) VALUES (%s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s)'''
+                insert_values = (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), protocol, trans_layer, TCP_port, UDP_port, Gyro_sensibility, Acc_sensibility,
+                                 Gyro_srate, Acc_srate, Disc_time, Host_ip_addr, Wifi_ssid, Wifi_pass)
 
                 cur.execute(insert_script, insert_values)
 
@@ -218,8 +234,20 @@ def get_current_config():
 
                 protocol = config[1]
                 transport_layer = config[2]
+                tcp_port = config[3]
+                udp_port = config[4]
+                gyro_sens = config[5]
+                acc_sens = config[6]
+                gyro_srate = config[7]
+                acc_srate = config[8]
+                disc_time = config[9]
+                host_ip_addr = config[10]
+                wifi_ssid = config[11]
+                wifi_pass = config[12]
 
-                return protocol, transport_layer
+
+                return protocol, transport_layer, tcp_port, udp_port, gyro_sens, acc_sens, gyro_srate, acc_srate, \
+                        disc_time, host_ip_addr, wifi_ssid, wifi_pass
     finally:
         if conn is not None:
             conn.close()
@@ -270,8 +298,8 @@ def create_tables():
                                         UDP_Port integer,
                                         GyroSensibility integer,
                                         AccSensibility integer,
-                                        GyroSamplingRate float,
-                                        AccSamplingRate float ,
+                                        GyroSamplingRate integer,
+                                        AccSamplingRate integer ,
                                         DiscTime integer,
                                         HostIpAddr varchar(32),
                                         WifiSSID varchar,
