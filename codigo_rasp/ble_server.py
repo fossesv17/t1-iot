@@ -21,6 +21,6 @@ async def main(ADDRESS):
         print("Characterisic A {0}".format("".join(map(chr, char_value))))
         # Luego podemos escribir en la caracteristica
         data = 'Hello World!'.encode()
-        await client.write_gatt_char(CHARACTERISTIC_UUID, b"\x01\x00")
+        await client.write_gatt_char(CHARACTERISTIC_UUID, data)
 
 asyncio.run(main(ADDRESS))

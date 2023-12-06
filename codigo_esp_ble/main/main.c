@@ -33,6 +33,7 @@
 #include "esp_gatt_common_api.h"
 
 #include "sdkconfig.h"
+#include "packaging.c"
 
 #define GATTS_TAG "GATTS_DEMO"
 
@@ -171,6 +172,8 @@ typedef struct {
 
 static prepare_type_env_t a_prepare_write_env;
 
+
+esp_err_t ble_send(char* data);
 void example_write_event_env(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param);
 void example_exec_write_event_env(prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param);
 
@@ -229,6 +232,29 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
     default:
         break;
     }
+}
+
+esp_err_t ble_send(char *data) {
+    // check if connected
+    if (gl_profile_tab[PROFILE_APP_ID].conn_id ==
+        0xFF) {  // assuming 0xFF is default when not connected
+        ESP_LOGE(GATTS_TAG, "Not connected to a client");
+        return ESP_FAIL;
+    }
+
+    size_t len = strlen(data);
+    esp_err_t ret = esp_ble_gatts_send_indicate(
+        gl_profile_tab[PROFILE_APP_ID].gatts_if,
+        gl_profile_tab[PROFILE_APP_ID].conn_id,
+        gl_profile_tab[PROFILE_APP_ID].char_handle, len,
+        (uint8_t *)data, false);
+
+    if (ret) {
+        ESP_LOGE(GATTS_TAG, "Send indicate error");
+    } else {
+        ESP_LOGI(GATTS_TAG, "Send indicate success");
+    }
+    return ret;
 }
 
 void example_write_event_env(esp_gatt_if_t gatts_if, prepare_type_env_t *prepare_write_env, esp_ble_gatts_cb_param_t *param){
@@ -343,7 +369,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
         rsp.attr_value.value[0] = 0xde;
         rsp.attr_value.value[1] = 0xed;
         rsp.attr_value.value[2] = 0xbe;
-        rsp.attr_value.value[3] = 0xef;
+        rsp.attr_value.value[3] = 0xbe;
         esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id,
                                     ESP_GATT_OK, &rsp);
         break;
@@ -352,7 +378,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
         ESP_LOGI(GATTS_TAG, "GATT_WRITE_EVT, conn_id %d, trans_id %" PRIu32 ", handle %d", param->write.conn_id, param->write.trans_id, param->write.handle);
         if (!param->write.is_prep){
             ESP_LOGI(GATTS_TAG, "GATT_WRITE_EVT, value len %d, value :", param->write.len);
-            esp_log_buffer_hex(GATTS_TAG, param->write.value, param->write.len); //esp_log_buffer_hex(GATTS_TAG, param->write.value, param->write.len); 
+            esp_log_buffer_hex(GATTS_TAG, param->write.value, param->write.len); 
             if (gl_profile_tab[PROFILE_APP_ID].descr_handle == param->write.handle && param->write.len == 2){
                 uint16_t descr_value = param->write.value[1]<<8 | param->write.value[0];
                 if (descr_value == 0x0001){
@@ -388,6 +414,11 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
                 }
 
             }
+        }
+        char* buf = protocol1();
+        esp_err_t ret = ble_send(buf);
+        if (ret) {
+            ESP_LOGI(GATTS_TAG, "U SUCK");
         }
         example_write_event_env(gatts_if, &a_prepare_write_env, param);
         break;

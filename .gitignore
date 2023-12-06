@@ -1,4 +1,5 @@
 .vscode
 build
 codigo_esp/build/*
+codigo_esp/cmake-build-debug/*
 .vscode/settings.json
