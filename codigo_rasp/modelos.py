@@ -19,7 +19,7 @@ una logica de insercion como la siguiente:
 '''
 
 # Configuración de la base de datos
-hostname = 'db'
+hostname = 'localhost'
 port_id = 5432
 user = 'postgres'
 password = 'postgres'
@@ -31,6 +31,7 @@ db = PostgresqlDatabase('iot_db',
                         user=user,
                         password=password)
 
+
 cur = None
 
 def insert_to_Datos(headers, dataInDict):
@@ -38,12 +39,12 @@ def insert_to_Datos(headers, dataInDict):
     :param headers: Un diccionario con los headers
     :param dataInDict: Un diccionario con todos los datos que se desean agregar
     """
-
+    conn = None
     try:
 
         with psycopg2.connect(host=hostname,
-                            user=user,
-                            password=password) as conn:
+                                user=user,
+                                password=password) as conn:
             
             with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
 
@@ -107,12 +108,12 @@ def insert_to_Datos(headers, dataInDict):
         if conn is not None:
             conn.close()
 
-
 def insert_to_Configuracion(headers, dataInDict):
     """
     :param headers: Un diccionario con los headers
     :param dataInDict: Un diccionario con todos los datos que deben introducirse en esta tabla
     """
+    conn = None
     try:
 
         with psycopg2.connect(host=hostname,
@@ -149,7 +150,6 @@ def insert_to_Configuracion(headers, dataInDict):
         if conn is not None:
             conn.close()
 
-
 def insert_to_Logs(headers, dataInDict):
     """
     :param headers: Un diccionario con los headers
@@ -174,7 +174,6 @@ def insert_to_Logs(headers, dataInDict):
     finally:
         if conn is not None:
             conn.close()
-
 
 def insert_to_Loss(headers, dataInDict):
     """
@@ -248,6 +247,94 @@ def get_current_config():
 
                 return protocol, transport_layer, tcp_port, udp_port, gyro_sens, acc_sens, gyro_srate, acc_srate, \
                         disc_time, host_ip_addr, wifi_ssid, wifi_pass
+    finally:
+        if conn is not None:
+            conn.close()
+
+def get_data_from_datos(col_name:str):
+    """
+    :return: Retorna un dataset con la columna col_name de la tabla Datos
+    """
+    try:
+        with psycopg2.connect(host=hostname,
+                            user=user,
+                            password=password) as conn:
+            
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+
+                cur.execute('SELECT {0} FROM Datos WHERE {0} IS NOT NULL'.format(col_name))
+                data = cur.fetchall()
+
+                return data
+            
+    except Exception as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+def get_data_from_config(col_name:str):
+    """
+    :return: Retorna un dataset con la columna col_name de la tabla Configuracion
+    """
+    try:
+        with psycopg2.connect(host=hostname,
+                            user=user,
+                            password=password) as conn:
+            
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+
+                cur.execute('SELECT {0} FROM Configuracion WHERE {0} IS NOT NULL'.format(col_name))
+                data = cur.fetchall()
+
+                return data
+            
+    except Exception as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+def get_data_from_loss(col_name:str):
+    """
+    :return: Retorna un dataset con la columna col_name de la tabla Loss
+    """
+    try:
+        with psycopg2.connect(host=hostname,
+                            user=user,
+                            password=password) as conn:
+            
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+
+                cur.execute('SELECT {0} FROM Loss WHERE {0} IS NOT NULL'.format(col_name))
+                data = cur.fetchall()
+
+                return data
+            
+    except Exception as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+def get_data_from_logs(col_name:str):
+    """
+    :return: Retorna un dataset con la columna col_name de la tabla Logs
+    """
+    try:
+        with psycopg2.connect(host=hostname,
+                            user=user,
+                            password=password) as conn:
+            
+            with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+
+                cur.execute('SELECT {0} FROM Logs WHERE {0} IS NOT NULL'.format(col_name))
+                data = cur.fetchall()
+
+                return data
+            
+    except Exception as error:
+        print(error)
     finally:
         if conn is not None:
             conn.close()
@@ -328,8 +415,8 @@ def create_tables():
         if conn is not None:
             conn.close()
 
-# if __name__ == "__main__":
-#     create_tables()
+def main():
+    create_tables()
 #     headers_datos = {"ID_device": 'Barry', "MAC": '2C:41:A1:27:09:57', "Transport_layer": '1', "ID_protocol": 2, "length": 51}
 #     insert_to_datos_values = {"Batt_level": 75, "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Temp": 15, "Press": 1100, 
 #                             "Hum": 55, "Co": 176, "RMS": 0.009, "Amp_X": 0.1, "Frec_X": 30.3, "Amp_Y": 0.05,
