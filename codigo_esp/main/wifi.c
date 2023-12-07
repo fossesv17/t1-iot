@@ -188,7 +188,7 @@ void socket_tcp(struct Configuration *config){
         char* msg = create_pack(msg_id, config->tlayer, config->protocol);
         if (msg != NULL) {
             if (protocol == 4) {
-                int err = fragTCP(msg, pack_length[config->protocol], sock);
+                int err = fragTCP(msg, 12+pack_length[config->protocol], sock);
                 if (err < 0) {
                     ESP_LOGI(TAG, "Manito se le cayo el paquete");
                     return;
@@ -196,7 +196,7 @@ void socket_tcp(struct Configuration *config){
             }
 
             else {
-                send(sock, msg, pack_length[config->protocol], 0);
+                send(sock, msg, 12+pack_length[config->protocol], 0);
                 ESP_LOGI("WIFI TCP", "Enviando mensaje por protocolo %d", config->protocol);
             }
             // Recibir respuesta
@@ -210,6 +210,14 @@ void socket_tcp(struct Configuration *config){
             msg_id++;
             free(msg);
             esp_deep_sleep(config->d_time);
+            if (config->protocol == 3){
+                config->tlayer = 0;
+                config->protocol = 0;
+                break;
+            }
+            else {
+                config->protocol++;
+            }
         }
     }
     // Cerrar el socket
@@ -228,13 +236,11 @@ void socket_udp(struct Configuration *config) {
         ESP_LOGE(TAG, "Error al crear es socket");
     }
 
-    char echo_buffer[128];
+    char echo_buffer[4];
     // char config_buf[128];
     uint8_t msg_id = 1;
 
     while (1) {
-        // recvfrom(sock, config_buf, sizeof(config_buf) - 1, 0, NULL, NULL);
-        // ESP_LOGI("WIFI UDP", "Config %s", config_buf);
         char* msg = create_pack(msg_id, config->tlayer, config->protocol);
         if (msg != NULL) {
             if (config->protocol == 4) {
@@ -246,15 +252,17 @@ void socket_udp(struct Configuration *config) {
             }
             else {
                 sendto(sock, msg, 12+pack_length[config->protocol], 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
-                ESP_LOGI("WIFI UPD", "Enviando mensaje por protocolo %d", config->protocol);
+                ESP_LOGI("WIFI UDP", "Enviando mensaje por protocolo %d", config->protocol);
 
                 int echo_recv = recvfrom(sock, echo_buffer, sizeof(echo_buffer) - 1, 0, NULL, NULL);
                 if (echo_recv < 0) {
                     ESP_LOGE(TAG, "Error al recibir echo");
                     return;
                 }
+                echo_buffer[echo_recv] = '\0'; 
+                uint8_t new_proto = atoi(echo_buffer);
+                config->protocol = new_proto;
             }
-            ESP_LOGI(TAG, "TAMO JOYA");
             free(msg);
             msg_id++;
             vTaskDelay(2000 / portTICK_PERIOD_MS);
