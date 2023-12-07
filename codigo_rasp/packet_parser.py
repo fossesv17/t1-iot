@@ -162,7 +162,7 @@ def dataToDict(protocol, data):
 
         batt_lvl, timestmp, temp, press, hum, co = unpack(DATA_FORMAT[protocol], data)
 
-        data2 = [batt_lvl, timestmp.decode(), temp, press, hum, co]
+        data2 = [batt_lvl, timestmp, temp, press, hum, co]
 
         for i in range(0, len(p2)):
             data_dict[p2[i]] = data2[i]
@@ -175,7 +175,7 @@ def dataToDict(protocol, data):
         
         batt_lvl, timestmp, temp, press, hum, co, rms, ampx, frecx, ampy, frecy, ampz, frecz = unpack(DATA_FORMAT[protocol], data)
 
-        data3 = [batt_lvl, timestmp.decode(), temp, press, hum, co, rms, ampx, frecx, ampy, frecy, ampz, frecz]
+        data3 = [batt_lvl, timestmp, temp, press, hum, co, rms, ampx, frecx, ampy, frecy, ampz, frecz]
 
         for i in range(0, len(p3)):
             data_dict[p3[i]] = data3[i]
@@ -211,7 +211,7 @@ def dataToDict(protocol, data):
         rgyry = unpack("2000f", data[offset+4*step:offset+5*step])
         rgyrz = unpack("2000f", data[offset+5*step:offset+6*step])
 
-        data4 = [batt_lvl, timestmp.decode(), temp, press, hum, co, accx, accy, accz, rgyrx, rgyry, rgyrz]
+        data4 = [batt_lvl, timestmp, temp, press, hum, co, accx, accy, accz, rgyrx, rgyry, rgyrz]
         
         for i in range(0, len(p4)):
             data_dict[p4[i]] = data4[i]
@@ -292,3 +292,5 @@ insert_to_config = {"TCP_Port": 5432, "UDP_Port":8765, "Gyro_Sensibility":50, "A
 
 # print(headers)
 # print(data)
+
+# print(unpacking(b'\x02\x00<a\x05e\xa5L\x00\x02\x1b\x00\t\x92\x18\x00\x00\x153\x04\x00\x00P\x00\x008C'))

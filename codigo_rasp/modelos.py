@@ -19,13 +19,13 @@ una logica de insercion como la siguiente:
 '''
 
 # Configuración de la base de datos
-hostname = 'localhost'
+hostname = 'db'
 port_id = 5432
 user = 'postgres'
 password = 'postgres'
-database = 'db'
+database = 'iot_db'
 
-db = PostgresqlDatabase('db',
+db = PostgresqlDatabase('iot_db',
                         host=hostname,
                         port=port_id,
                         user=user,
@@ -320,6 +320,7 @@ def create_tables():
                 cur.execute(create_logs_script)
                 cur.execute(create_loss_script)
 
+            conn.close()
 
     except Exception as error:
         print(error)
@@ -327,10 +328,12 @@ def create_tables():
         if conn is not None:
             conn.close()
 
-
-if __name__ == "__main__":
-    print("Creando tablas ...")
-    create_tables()
-    print("Tablas creadas. Nos vemos!")
+# if __name__ == "__main__":
+#     create_tables()
+#     headers_datos = {"ID_device": 'Barry', "MAC": '2C:41:A1:27:09:57', "Transport_layer": '1', "ID_protocol": 2, "length": 51}
+#     insert_to_datos_values = {"Batt_level": 75, "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Temp": 15, "Press": 1100, 
+#                             "Hum": 55, "Co": 176, "RMS": 0.009, "Amp_X": 0.1, "Frec_X": 30.3, "Amp_Y": 0.05,
+#                             "Frec_Y": 59.1, "Amp_Z": 0.009, "Frec_Z": 90.2}
+#     insert_to_Datos(headers_datos, insert_to_datos_values)
 
 
