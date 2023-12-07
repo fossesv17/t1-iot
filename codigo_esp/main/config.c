@@ -19,7 +19,7 @@ struct Configuration {
 
 void initConfig(struct Configuration *config) {
     if (config != NULL) {
-        config->tlayer = 1;
+        config->tlayer = 0;
         config->protocol = 0;
         snprintf(config->host_ip_addr, sizeof(config->host_ip_addr), "192.168.4.1");
         snprintf(config->wifi_ssid, sizeof(config->wifi_ssid), "pdfteamWifi");
