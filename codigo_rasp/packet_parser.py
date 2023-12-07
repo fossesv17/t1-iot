@@ -162,7 +162,7 @@ def dataToDict(protocol, data):
 
         batt_lvl, timestmp, temp, press, hum, co = unpack(DATA_FORMAT[protocol], data)
 
-        data2 = [batt_lvl, timestmp, temp, press, hum, co]
+        data2 = [batt_lvl, timestmp.decode(), temp, press, hum, co]
 
         for i in range(0, len(p2)):
             data_dict[p2[i]] = data2[i]
@@ -175,7 +175,7 @@ def dataToDict(protocol, data):
         
         batt_lvl, timestmp, temp, press, hum, co, rms, ampx, frecx, ampy, frecy, ampz, frecz = unpack(DATA_FORMAT[protocol], data)
 
-        data3 = [batt_lvl, timestmp, temp, press, hum, co, rms, ampx, frecx, ampy, frecy, ampz, frecz]
+        data3 = [batt_lvl, timestmp.decode(), temp, press, hum, co, rms, ampx, frecx, ampy, frecy, ampz, frecz]
 
         for i in range(0, len(p3)):
             data_dict[p3[i]] = data3[i]
@@ -199,7 +199,19 @@ def dataToDict(protocol, data):
         rgyry = unpack("2000f", data[offset+4*step:offset+5*step])
         rgyrz = unpack("2000f", data[offset+5*step:offset+6*step])
 
-        data4 = [batt_lvl, timestmp, temp, press, hum, co, accx, accy, accz, rgyrx, rgyry, rgyrz]
+        offset = calcsize("<H19s4i")
+        batt_lvl, timestmp, temp, press, hum, co = unpack("<H19s4i", data[:offset])
+
+        step = calcsize("2000f")
+
+        accx = unpack("2000f", data[offset:offset+step])
+        accy = unpack("2000f", data[offset+step:offset+2*step])
+        accz = unpack("2000f", data[offset+2*step:offset+3*step])
+        rgyrx = unpack("2000f", data[offset+3*step:offset+4*step])
+        rgyry = unpack("2000f", data[offset+4*step:offset+5*step])
+        rgyrz = unpack("2000f", data[offset+5*step:offset+6*step])
+
+        data4 = [batt_lvl, timestmp.decode(), temp, press, hum, co, accx, accy, accz, rgyrx, rgyry, rgyrz]
         
         for i in range(0, len(p4)):
             data_dict[p4[i]] = data4[i]
