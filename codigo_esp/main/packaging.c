@@ -6,18 +6,16 @@
 #include "esp_log.h"
 #include "data_gen.c"
 
-const uint16_t pack_length[] = {2, 6, 16, 44, 48016}; // se suma 1 para considerar el caracter \n
+const uint16_t pack_length[] = {1, 5, 15, 43, 48015};
 
 char* header(uint16_t msg_id, uint8_t transport_layer, uint8_t protocol) {
     char* hd = (char*) malloc(12);
     memcpy(hd, &msg_id, 2);
     
-    uint8_t* mac = (uint8_t*) malloc(6);
-    esp_err_t mac_esp_err = esp_read_mac(mac, ESP_MAC_WIFI_STA);
-    if (mac_esp_err == ESP_OK) {
-        memcpy(&(hd[2]), mac, 6);
-    }
-    free(mac);
+    uint8_t* MACaddrs = (uint8_t*)malloc(6);
+	esp_efuse_mac_get_default(MACaddrs);
+	memcpy(&(hd[2]), MACaddrs, 6);
+	free(MACaddrs);
 
     uint16_t msg_len = 12 + pack_length[protocol];
     
@@ -82,7 +80,7 @@ char* protocol3() {
     memcpy(&(msg[1]), &timestamp, 4);
     memcpy(&(msg[5]), &temp, 1);
     memcpy(&(msg[6]), &pres, 4);
-    memcpy(&(msg[10]), &hum, 1);
+    memcpy(&(msg[10]), &hum, 1);    
     memcpy(&(msg[11]), &co, 4);
     memcpy(&(msg[15]), &rms, 4);
     memcpy(&(msg[19]), &ampx, 4);

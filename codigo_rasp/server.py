@@ -3,6 +3,8 @@ import threading
 import time
 import signal
 from threading import Event
+from modelos import *
+from packet_parser import *
 
 HOST = '0.0.0.0' 
 PORT = 1234      
@@ -30,11 +32,11 @@ class Server:
     def __init__(self, host, port):
         self.host = host
         self.port = port
-        self.transport_layer = 1 # TCP = 1; UPD = 0
+        self.transport_layer = 0 # TCP = 1; UPD = 0
         self.socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.stop_event = Event()
-       
+        self.send_conf = 0 # Starts at 1 to send initial config
         self.connected_clients = set()
 
     def handle_sigint(self, sig, frame):
@@ -104,15 +106,25 @@ class Server:
             while not self.stop_event.is_set():
                 data = conn.recv(1024)  # Recibe hasta 1024 bytes del cliente
                 if data:
-                    respuesta = "tu mensaje es: " + data.decode('utf-8')
-                    current_client.last_message = data.decode('utf-8')
+                    decoded = unpacking(data)
+                    respuesta = "tu mensaje es: " + data
+                    current_client.last_message = decoded
                     conn.sendall(respuesta.encode('utf-8'))  # Envía la respuesta al cliente
             print("El cliente", addr, "se desconectó")
     
     def _handle_udp(self):
         while not self.stop_event.is_set():
+            if (self.send_conf):
+                config = get_current_config()
+                stringConf = "".join(config)
+                print(stringConf)
+                self.socket_udp.sendto(stringConf, addr)         
+                self.send_conf = 0
+
             data, addr = self.socket_udp.recvfrom(1024)
-            print(f"Received {data.decode('utf-8')} from {addr}")
+            decoded = unpacking(data)
+            # insert_to_Datos(decoded[0], decoded[1])
+            print(f"Received {decoded[1]} from {addr}")
 
             # echo
             self.socket_udp.sendto(data, addr)
