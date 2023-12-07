@@ -155,7 +155,7 @@ class ServerUDP:
 
     def _start_udp_socket(self):
         self.socket.bind((self.host, self.port))
-        self.socket.settimeout(15)
+        # self.socket.settimeout(15)
         print("El servidor UDP está esperando conexiones en el puerto", self.port)
         while not self.stop_event.is_set():
             try:
@@ -215,7 +215,7 @@ class ServerTCP:
     def _start_tcp_socket(self):
         self.socket.bind((self.host, self.port))
         self.socket.listen(2)
-        #self.socket.settimeout(15)
+        # self.socket.settimeout()
 
         print("El servidor TCP está esperando conexiones en el puerto", self.port)
         while not self.stop_event.is_set():
@@ -271,7 +271,7 @@ class ServerTCP:
         threading.Thread(target=self._handle_tcp, args=(conn, addr)).start()
 
 if __name__ == "__main__":
-    server_udp = Server(HOST, PORT_UDP)
+    server_udp = ServerUDP(HOST, PORT_UDP)
     signal.signal(signal.SIGINT, server_udp.handle_sigint)
     server_udp.start()
     # register server.handle_sigint as the handler function for SIGINT
