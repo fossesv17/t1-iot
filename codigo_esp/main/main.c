@@ -4,6 +4,7 @@
 void app_main(void){
     struct Configuration conf;
     initConfig(&conf);
+    
     while (1) {
         if (conf.tlayer == 0) { //UDP
             ESP_LOGI("WIFI", "Conectando a %s", conf.wifi_ssid);    
@@ -12,14 +13,14 @@ void app_main(void){
             ESP_LOGI(TAG,"Conectado a WiFi!\n");
             socket_udp(&conf);
         }
-        else if (conf.tlayer ==  1) { // TCP
+        if (conf.tlayer ==  1) { // TCP
             ESP_LOGI("WIFI", "Conectando a %s", conf.wifi_ssid);    
             nvs_init();
             wifi_init_sta(conf.wifi_ssid, conf.wifi_pw);
             ESP_LOGI(TAG,"Conectado a WiFi!\n");
             socket_tcp(&conf);
         }
-        else if (conf.tlayer ==  2) { // BLEC
+        if (conf.tlayer ==  2) { // BLEC
             ESP_LOGI("BLE", "Continuo --- En Construcción");
             changeTransportLayer(&conf, 0);
         }

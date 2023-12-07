@@ -259,9 +259,17 @@ void socket_udp(struct Configuration *config) {
                     ESP_LOGE(TAG, "Error al recibir echo");
                     return;
                 }
-                echo_buffer[echo_recv] = '\0'; 
-                uint8_t new_proto = atoi(echo_buffer);
-                config->protocol = new_proto;
+                // echo_buffer[echo_recv] = '\0'; 
+                // uint8_t new_proto = atoi(echo_buffer);
+                // config->protocol = new_proto;
+                if (config->protocol == 3){
+                    config->tlayer = 1;
+                    config->protocol = 0;
+                    break;
+                }
+                else {
+                    config->protocol++;
+                }
             }
             free(msg);
             msg_id++;
