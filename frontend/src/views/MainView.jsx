@@ -2,6 +2,7 @@ import BaseGraph from "../components/graficos/BaseGraph";
 import SettingsForm from "../components/settings/SettingsFrom";
 import Comment from "../components/utiles/Comment";
 import api from "../utils/api";
+import Dropdown from "../components/dropdown/dropdown";
 
 import { useState } from "react";
 
@@ -27,6 +28,19 @@ const MainView = () => {
     setApiData(res.data);
   };
 
+  const handleDropdownChange = (selectedValue) => {
+    setValue("selectedOption", selectedValue);
+  };
+
+  const selectedOption = watch("selectedOption");
+
+  const dropdownOptions = [
+    { value: "ESP1", label: "ESP 1" },
+    { value: "ESP2", label: "ESP 2" },
+  ];
+
+
+
   const postToApi = async () => {
     const res = await api.post("/ejemplo/", {
       data: "data",
@@ -48,6 +62,7 @@ const MainView = () => {
           ></Comment>
         </div>
 
+
         <div className="w-2/3 border rounded-md ">
           <h3 className="text-2xl p-2">Datos</h3>
 
@@ -57,6 +72,14 @@ const MainView = () => {
             comment={`Aquí se espera que puedan seleccionar qué datos se quieren graficar
               , y de qué dispositivo (Cuál de las dos ESP)`}
           ></Comment>
+
+          <form className="flex flex-col gap-2 p-4" onSubmit={handleSubmit(onSubmit)}/>
+            <Dropdown
+              label="Select ESP"
+              options={dropdownOptions}
+              value={selectedOption}
+              onChange={handleDropdownChange}
+            />
 
           <h3 className="text-2xl p-2">API</h3>
           <Comment comment={`Les puede ser util ir a localhost:8000/docs!`} />

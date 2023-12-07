@@ -21,6 +21,9 @@ export default function App() {
     // Aqui deben de enviar a la api un cambio en la configuracion
   };
 
+
+
+
   console.log(watch("nombreDelCampo")); // watch input value by passing the name of it
 
   return (
@@ -34,12 +37,13 @@ export default function App() {
       </div>
 
       <div className="flex justify-center items-center p-4  bg-slate-100 rounded-md shadow-black">
-        <label className="whitespace-nowrap mr-5">Setting 1:</label>
+        <label className="whitespace-nowrap mr-5">Setting 2:</label>
         <input
           className="w-full h-10 rounded"
           {...register("nombreDelCampo")}
         />
       </div>
+
 
       <input
         className="w-fit h-10 px-4 bg-green-300 rounded text-slate-800 py-2 cursor-pointer hover:bg-green-400"
