@@ -19,12 +19,12 @@ struct Configuration {
 
 void initConfig(struct Configuration *config) {
     if (config != NULL) {
-        config->tlayer = 1;
+        config->tlayer = 0;
         config->protocol = 0;
         snprintf(config->host_ip_addr, sizeof(config->host_ip_addr), "192.168.4.1");
         snprintf(config->wifi_ssid, sizeof(config->wifi_ssid), "pdfteamWifi");
         snprintf(config->wifi_pw, sizeof(config->wifi_pw), "teamPDF3");
-        config->Port_TCP = 1234;
+        config->Port_TCP = 1235;
         config->Port_UDP = 1234;
         config->gyro_samp_rate = 0.5;
         config->gyro_sens = 50;

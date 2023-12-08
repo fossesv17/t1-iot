@@ -18,6 +18,11 @@
 #include "packaging.c"
 #include "config.c"
 
+#define WIFI_SSID "pdfteamWifi"
+#define WIFI_PASSWORD "teamPDF3"
+#define SERVER_IP "192.168.4.1" // IP del servidor
+#define SERVER_PORT 1234
+
 // Variables de WiFi
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT BIT1
@@ -104,8 +109,8 @@ void wifi_init_sta(char* ssid, char* password) {
     memset(&wifi_config, 0, sizeof(wifi_config_t));
 
     // Set the specific fields
-    strcpy((char*)wifi_config.sta.ssid, ssid);
-    strcpy((char*)wifi_config.sta.password, password);
+    strcpy((char*)wifi_config.sta.ssid, WIFI_SSID);
+    strcpy((char*)wifi_config.sta.password, WIFI_PASSWORD);
     wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
     wifi_config.sta.pmf_cfg.capable = true;
     wifi_config.sta.pmf_cfg.required = false;
@@ -183,7 +188,7 @@ void socket_tcp(struct Configuration *config){
         char* msg = create_pack(msg_id, config->tlayer, config->protocol);
         if (msg != NULL) {
             if (protocol == 4) {
-                int err = fragTCP(msg, pack_length[config->protocol], sock);
+                int err = fragTCP(msg, 12+pack_length[config->protocol], sock);
                 if (err < 0) {
                     ESP_LOGI(TAG, "Manito se le cayo el paquete");
                     return;
@@ -191,7 +196,7 @@ void socket_tcp(struct Configuration *config){
             }
 
             else {
-                send(sock, msg, pack_length[config->protocol], 0);
+                send(sock, msg, 12+pack_length[config->protocol], 0);
                 ESP_LOGI("WIFI TCP", "Enviando mensaje por protocolo %d", config->protocol);
             }
             // Recibir respuesta
@@ -205,6 +210,14 @@ void socket_tcp(struct Configuration *config){
             msg_id++;
             free(msg);
             esp_deep_sleep(config->d_time);
+            if (config->protocol == 3){
+                config->tlayer = 0;
+                config->protocol = 0;
+                break;
+            }
+            else {
+                config->protocol++;
+            }
         }
     }
     // Cerrar el socket
@@ -223,34 +236,41 @@ void socket_udp(struct Configuration *config) {
         ESP_LOGE(TAG, "Error al crear es socket");
     }
 
-    char echo_buffer[128];
-    char config_buf[128];
+    char echo_buffer[4];
+    // char config_buf[128];
     uint8_t msg_id = 1;
 
     while (1) {
-        recvfrom(sock, config_buf, sizeof(config_buf) - 1, 0, NULL, NULL);
-        ESP_LOGI("WIFI UDP", "Config %s", config_buf);
-        
         char* msg = create_pack(msg_id, config->tlayer, config->protocol);
         if (msg != NULL) {
             if (config->protocol == 4) {
-                int err = fragUDP(msg, pack_length[config->protocol], sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
+                int err = fragUDP(msg, 12+pack_length[config->protocol], sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
                 if (err < 0) {
                     ESP_LOGI(TAG, "Manito se le cayo el paquete");
                     return;
                 }
             }
             else {
-                sendto(sock, msg, pack_length[config->protocol], 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
-                ESP_LOGI("WIFI UPD", "Enviando mensaje de largo por protocolo %d", config->protocol);
+                sendto(sock, msg, 12+pack_length[config->protocol], 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
+                ESP_LOGI("WIFI UDP", "Enviando mensaje por protocolo %d", config->protocol);
 
                 int echo_recv = recvfrom(sock, echo_buffer, sizeof(echo_buffer) - 1, 0, NULL, NULL);
                 if (echo_recv < 0) {
                     ESP_LOGE(TAG, "Error al recibir echo");
                     return;
                 }
+                // echo_buffer[echo_recv] = '\0'; 
+                // uint8_t new_proto = atoi(echo_buffer);
+                // config->protocol = new_proto;
+                if (config->protocol == 3){
+                    config->tlayer = 1;
+                    config->protocol = 0;
+                    break;
+                }
+                else {
+                    config->protocol++;
+                }
             }
-            ESP_LOGI(TAG, "TAMO JOYA");
             free(msg);
             msg_id++;
             vTaskDelay(2000 / portTICK_PERIOD_MS);
